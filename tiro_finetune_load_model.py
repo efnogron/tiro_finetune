@@ -1,5 +1,22 @@
+import os
+from dotenv import load_dotenv
 from unsloth import FastLanguageModel
 import torch
+
+
+# Check if environment variables are set correctly
+if HF_READ_PASSKEY is None or HF_WRITE_PASSKEY is None:
+    raise ValueError("One or more environment variables are missing.")
+
+HF_READ_PASSKEY = os.getenv('HF_READ_PASSKEY')
+HF_WRITE_PASSKEY = os.getenv('HF_WRITE_PASSKEY')
+
+# Print to verify the variables are loaded (for debugging purposes)
+print("Huggingface Read Passkey:", HF_READ_PASSKEY)
+print("Huggingface Write Passkey:", HF_READ_PASSKEY)
+
+
+
 max_seq_length = 4096 # automatically does RoPE Scaling internally, can choose any value
 dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
 #load_in_4bit = False # Use 4bit quantization to reduce memory usage. Can be False.
@@ -143,7 +160,7 @@ print(f"Peak reserved memory for training = {used_memory_for_lora} GB.")
 print(f"Peak reserved memory % of max memory = {used_percentage} %.")
 print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.")
 
-model.save_pretrained("_model") # Local saving
+model.save_pretrained("Llama3dumbbabytiro") # Local saving
 tokenizer.save_pretrained("Llama3dumbbabytiro")
 model.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = "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") # Online saving
 tokenizer.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = "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") # Online saving
@@ -153,21 +170,21 @@ if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_met
 if False: model.push_to_hub_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_16bit", token = "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") #highest available quality
 
 # Merge to 4bit
-if False: model.save_pretrained_merged("model", tokenizer, save_method = "merged_4bit",)
+if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_4bit",)
 if False: model.push_to_hub_merged("hf/model", tokenizer, save_method = "merged_4bit", token = "")
 
 # Just LoRA adapters
-if False: model.save_pretrained_merged("model", tokenizer, save_method = "lora",)
+if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "lora",)
 if False: model.push_to_hub_merged("hf/model", tokenizer, save_method = "lora", token = "")
 
 # Save to 8bit Q8_0
-if False: model.save_pretrained_gguf("model", tokenizer,)
+if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer,)
 if False: model.push_to_hub_gguf("hf/model", tokenizer, token = "")
 
 # Save to 16bit GGUF
-if False: model.save_pretrained_gguf("model", tokenizer, quantization_method = "f16")
+if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer, quantization_method = "f16")
 if False: model.push_to_hub_gguf("hf/model", tokenizer, quantization_method = "f16", token = "")
 
 # Save to q4_k_m GGUF
-if False: model.save_pretrained_gguf("model", tokenizer, quantization_method = "q4_k_m")
+if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer, quantization_method = "q4_k_m")
 if False: model.push_to_hub_gguf("hf/model", tokenizer, quantization_method = "q4_k_m", token = "")
