@@ -17,4 +17,11 @@ copy results into git SSH section
 
 git clone YOUR_REPOSITORY_URL
 
+# Install requirements
+python -m venv tiroEnv
+source tiroEnv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 
+# Log Into huggingface
+huggingface-cli login
