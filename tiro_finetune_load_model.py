@@ -93,3 +93,81 @@ pass
 from datasets import load_dataset
 dataset = load_dataset("OG-Tiro/Finetune_Evaluate_Answer", token="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", split="train")
 dataset = dataset.map(formatting_prompts_func, batched = True,)
+
+from trl import SFTTrainer
+from transformers import TrainingArguments
+
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,
+    train_dataset = dataset,
+    dataset_text_field = "text",
+    max_seq_length = max_seq_length,
+    dataset_num_proc = 2,
+    packing = False, # Can make training 5x faster for short sequences.
+    args = TrainingArguments(
+        per_device_train_batch_size = 2,
+        gradient_accumulation_steps = 4,
+        warmup_steps = 5,
+        max_steps = 60, # will override epochs if max steps is given
+        learning_rate = 2e-4,
+        fp16 = not torch.cuda.is_bf16_supported(),
+        bf16 = torch.cuda.is_bf16_supported(),
+        logging_steps = 1,
+        optim = "adamw_8bit",
+        weight_decay = 0.01,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        output_dir = "outputs",
+    ),
+)
+
+#@title Show current memory stats
+gpu_stats = torch.cuda.get_device_properties(0)
+start_gpu_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
+max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
+print(f"GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
+print(f"{start_gpu_memory} GB of memory reserved.")
+
+trainer_stats = trainer.train()
+
+#@title Show final memory and time stats
+used_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
+used_memory_for_lora = round(used_memory - start_gpu_memory, 3)
+used_percentage = round(used_memory         /max_memory*100, 3)
+lora_percentage = round(used_memory_for_lora/max_memory*100, 3)
+print(f"{trainer_stats.metrics['train_runtime']} seconds used for training.")
+print(f"{round(trainer_stats.metrics['train_runtime']/60, 2)} minutes used for training.")
+print(f"Peak reserved memory = {used_memory} GB.")
+print(f"Peak reserved memory for training = {used_memory_for_lora} GB.")
+print(f"Peak reserved memory % of max memory = {used_percentage} %.")
+print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.")
+
+model.save_pretrained("_model") # Local saving
+tokenizer.save_pretrained("Llama3dumbbabytiro")
+model.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = "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") # Online saving
+tokenizer.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = "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") # Online saving
+
+# Merge to 16bit
+if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_16bit",)
+if False: model.push_to_hub_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_16bit", token = "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") #highest available quality
+
+# Merge to 4bit
+if False: model.save_pretrained_merged("model", tokenizer, save_method = "merged_4bit",)
+if False: model.push_to_hub_merged("hf/model", tokenizer, save_method = "merged_4bit", token = "")
+
+# Just LoRA adapters
+if False: model.save_pretrained_merged("model", tokenizer, save_method = "lora",)
+if False: model.push_to_hub_merged("hf/model", tokenizer, save_method = "lora", token = "")
+
+# Save to 8bit Q8_0
+if False: model.save_pretrained_gguf("model", tokenizer,)
+if False: model.push_to_hub_gguf("hf/model", tokenizer, token = "")
+
+# Save to 16bit GGUF
+if False: model.save_pretrained_gguf("model", tokenizer, quantization_method = "f16")
+if False: model.push_to_hub_gguf("hf/model", tokenizer, quantization_method = "f16", token = "")
+
+# Save to q4_k_m GGUF
+if False: model.save_pretrained_gguf("model", tokenizer, quantization_method = "q4_k_m")
+if False: model.push_to_hub_gguf("hf/model", tokenizer, quantization_method = "q4_k_m", token = "")
