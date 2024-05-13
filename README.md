@@ -1,8 +1,8 @@
 # tiro_finetune
 
 ## How to setup SSH to Runpod
-git config --global user.name "Your Name"
-git config --global user.email "your.email@example.com"
+git config --global user.name "efnogron"
+git config --global user.email "42118609+efnogron@users.noreply.github.com"
 
 # Generate SSH Key
 ssh-keygen -t rsa -b 4096 -C "your.email@example.com"
