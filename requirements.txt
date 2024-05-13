@@ -1,0 +1,12 @@
+# Core dependencies
+torch>=1.10.0  # PyTorch is needed for tensor operations and model handling
+transformers  # Provides access to pre-trained transformer models and utilities
+unsloth  # Unsloth package, install from GitHub with Colab-specific features
+xformers<0.0.26  # Transformer extensions, used for Flash Attention and other optimizations
+trl  # Transformer Reinforcement Learning, used for training with reinforcement learning techniques
+peft  # Parallel Execution for Transformers, optimizes transformer execution
+accelerate  # Simplifies running PyTorch models on multi-GPU/multi-TPU setups
+bitsandbytes  # For efficient memory usage during model training
+datasets  # Used for loading and processing datasets from Hugging Face
+psutil  # Allows checking system resources like RAM
+jupyterlab  # Provides the Jupyter notebook interface for running and testing code interactively
