@@ -3,13 +3,14 @@ from dotenv import load_dotenv
 from unsloth import FastLanguageModel
 import torch
 
+load_dotenv()
+
+HF_READ_PASSKEY = os.getenv('HF_READ_PASSKEY')
+HF_WRITE_PASSKEY = os.getenv('HF_WRITE_PASSKEY')
 
 # Check if environment variables are set correctly
 if HF_READ_PASSKEY is None or HF_WRITE_PASSKEY is None:
     raise ValueError("One or more environment variables are missing.")
-
-HF_READ_PASSKEY = os.getenv('HF_READ_PASSKEY')
-HF_WRITE_PASSKEY = os.getenv('HF_WRITE_PASSKEY')
 
 # Print to verify the variables are loaded (for debugging purposes)
 print("Huggingface Read Passkey:", HF_READ_PASSKEY)
@@ -108,7 +109,7 @@ def formatting_prompts_func(examples):
 pass
 
 from datasets import load_dataset
-dataset = load_dataset("OG-Tiro/Finetune_Evaluate_Answer", token="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", split="train")
+dataset = load_dataset("OG-Tiro/Finetune_Evaluate_Answer", token=HF_READ_PASSKEY, split="train")
 dataset = dataset.map(formatting_prompts_func, batched = True,)
 
 from trl import SFTTrainer
@@ -126,7 +127,7 @@ trainer = SFTTrainer(
         per_device_train_batch_size = 2,
         gradient_accumulation_steps = 4,
         warmup_steps = 5,
-        max_steps = 60, # will override epochs if max steps is given
+        max_steps = 2, # will override epochs if max steps is given
         learning_rate = 2e-4,
         fp16 = not torch.cuda.is_bf16_supported(),
         bf16 = torch.cuda.is_bf16_supported(),
@@ -162,29 +163,29 @@ print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.
 
 model.save_pretrained("Llama3dumbbabytiro") # Local saving
 tokenizer.save_pretrained("Llama3dumbbabytiro")
-model.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = "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") # Online saving
-tokenizer.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = "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") # Online saving
+model.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = HF_WRITE_PASSKEY) # Online saving
+tokenizer.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = HF_WRITE_PASSKEY) # Online saving
 
 # Merge to 16bit
 if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_16bit",)
-if False: model.push_to_hub_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_16bit", token = "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") #highest available quality
+if False: model.push_to_hub_merged("OG-Tiro/Llama3dumbbabytiro", tokenizer, save_method = "merged_16bit", token = HF_WRITE_PASSKEY) #highest available quality
 
 # Merge to 4bit
 if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_4bit",)
-if False: model.push_to_hub_merged("hf/model", tokenizer, save_method = "merged_4bit", token = "")
+if False: model.push_to_hub_merged("OG-Tiro/Llama3dumbbabytiro", tokenizer, save_method = "merged_4bit", token = HF_WRITE_PASSKEY)
 
 # Just LoRA adapters
 if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "lora",)
-if False: model.push_to_hub_merged("hf/model", tokenizer, save_method = "lora", token = "")
+if False: model.push_to_hub_merged("OG-Tiro/Llama3dumbbabytiro", tokenizer, save_method = "lora", token = HF_WRITE_PASSKEY)
 
 # Save to 8bit Q8_0
 if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer,)
-if False: model.push_to_hub_gguf("hf/model", tokenizer, token = "")
+if False: model.push_to_hub_gguf("OG-Tiro/Llama3dumbbabytiro", tokenizer, token = HF_WRITE_PASSKEY)
 
 # Save to 16bit GGUF
 if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer, quantization_method = "f16")
-if False: model.push_to_hub_gguf("hf/model", tokenizer, quantization_method = "f16", token = "")
+if False: model.push_to_hub_gguf("OG-Tiro/Llama3dumbbabytiro", tokenizer, quantization_method = "f16", token = HF_WRITE_PASSKEY)
 
 # Save to q4_k_m GGUF
 if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer, quantization_method = "q4_k_m")
-if False: model.push_to_hub_gguf("hf/model", tokenizer, quantization_method = "q4_k_m", token = "")
+if False: model.push_to_hub_gguf("OG-Tiro/Llama3dumbbabytiro", tokenizer, quantization_method = "q4_k_m", token = HF_WRITE_PASSKEY)
