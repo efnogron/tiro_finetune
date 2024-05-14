@@ -20,8 +20,8 @@ print("Huggingface Write Passkey:", HF_READ_PASSKEY)
 
 max_seq_length = 4096 # automatically does RoPE Scaling internally, can choose any value
 dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-#load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
-#load_in_8bit = True
+load_in_4bit = False # Use 4bit quantization to reduce memory usage. Can be False.
+load_in_8bit = False
 
 # 4bit pre quantized models we support for 4x faster downloading + no OOMs.
 fourbit_models = [
@@ -39,8 +39,8 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     #model_name = "unsloth/llama-3-70b",
     max_seq_length = max_seq_length,
     dtype = dtype,
-    #load_in_4bit = load_in_4bit, # i guess this must be changed to load in 8 bit?
-    #load_in_8bit = load_in_8bit
+    load_in_4bit = load_in_4bit, # i guess this must be changed to load in 8 bit?
+    load_in_8bit = load_in_8bit
     # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
 )
 
@@ -196,8 +196,8 @@ if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer,)# quantization
 if False: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, token = HF_WRITE_PASSKEY)
 
 # Save to 16bit GGUF
-if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer, quantization_method = "f16")
-if False: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, quantization_method = "f16", token = HF_WRITE_PASSKEY)
+if True: model.save_pretrained_gguf("bigbabytiro70b", tokenizer, quantization_method = "f16")
+if True: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, quantization_method = "f16", token = HF_WRITE_PASSKEY)
 
 # Save to q4_k_m GGUF
 if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer, quantization_method = "q4_k_m")
