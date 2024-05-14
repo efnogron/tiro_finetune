@@ -1,12 +1,14 @@
 .
 ├── Dockerfile
 ├── README.md
+├── gpu-config.py
 ├── jupyter_notebooks
-│   └── Tiro_+_Llama_3_8b_Finetune_070524.ipynb
+│   └── Tiro_+_Llama_3_8b_Finetune_070524.ipynb
 ├── requirements.txt
 ├── setup.sh
 ├── test.py
-└── tiro_finetune_load_model.py
+├── tiro-finetune-70b.py
+└── tiro-finetune-8b.py
 
 # tiro_finetune
 

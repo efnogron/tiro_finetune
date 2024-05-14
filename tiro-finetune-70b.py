@@ -20,7 +20,7 @@ print("Huggingface Write Passkey:", HF_READ_PASSKEY)
 
 max_seq_length = 4096 # automatically does RoPE Scaling internally, can choose any value
 dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
+#load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
 #load_in_8bit = True
 
 # 4bit pre quantized models we support for 4x faster downloading + no OOMs.
@@ -34,11 +34,12 @@ fourbit_models = [
 model, tokenizer = FastLanguageModel.from_pretrained(
     #model_name = "unsloth/llama-3-8b-bnb-4bit",
     #model_name = "unsloth/llama-3-8b", # 8 Bit version
-    model_name = "unsloth/llama-3-70b-Instruct-bnb-4bit",
+    #model_name = "unsloth/llama-3-70b-Instruct-bnb-4bit",
+    model_name = "meta-llama/Meta-Llama-3-70B",
     #model_name = "unsloth/llama-3-70b",
     max_seq_length = max_seq_length,
     dtype = dtype,
-    load_in_4bit = load_in_4bit, # i guess this must be changed to load in 8 bit?
+    #load_in_4bit = load_in_4bit, # i guess this must be changed to load in 8 bit?
     #load_in_8bit = load_in_8bit
     # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
 )
@@ -109,7 +110,7 @@ def formatting_prompts_func(examples):
 pass
 
 from datasets import load_dataset
-dataset = load_dataset("OG-Tiro/Finetune_Evaluate_Answer", token=HF_READ_PASSKEY, split="train")
+dataset = load_dataset("OG-Tiro/Finetune_Evaluate_Answer_Cleaned", token=HF_READ_PASSKEY, split="train")
 dataset = dataset.map(formatting_prompts_func, batched = True,)
 
 from trl import SFTTrainer
@@ -127,7 +128,7 @@ trainer = SFTTrainer(
         per_device_train_batch_size = 2,
         gradient_accumulation_steps = 4,
         warmup_steps = 5,
-        max_steps = 2, # will override epochs if max steps is given
+        max_steps = 200, # will override epochs if max steps is given
         learning_rate = 2e-4,
         fp16 = not torch.cuda.is_bf16_supported(),
         bf16 = torch.cuda.is_bf16_supported(),
@@ -161,31 +162,43 @@ print(f"Peak reserved memory for training = {used_memory_for_lora} GB.")
 print(f"Peak reserved memory % of max memory = {used_percentage} %.")
 print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.")
 
-model.save_pretrained("Llama3dumbbabytiro") # Local saving
-tokenizer.save_pretrained("Llama3dumbbabytiro")
-model.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = HF_WRITE_PASSKEY) # Online saving
-tokenizer.push_to_hub("OG-Tiro/Llama3dumbbabytiro", token = HF_WRITE_PASSKEY) # Online saving
+model.save_pretrained("bigbabytiro70b") # Local saving
+tokenizer.save_pretrained("bigbabytiro70b")
+model.push_to_hub("OG-Tiro/bigbabytiro70b", token = HF_WRITE_PASSKEY) # Online saving
+tokenizer.push_to_hub("OG-Tiro/bigbabytiro70b", token = HF_WRITE_PASSKEY) # Online saving
+
+# Merge the LoRA adapters with the uncompressed model
+merged_model = FastLanguageModel.merge_lora_adapters(
+    model=model,
+    lora_adapters_path="outputs"
+)
+
+# Save and upload the merged model
+merged_model.save_pretrained("bigbabytiro70b_merged")
+tokenizer.save_pretrained("bigbabytiro70b_merged")
+merged_model.push_to_hub("OG-Tiro/bigbabytiro70b_merged", token=HF_WRITE_PASSKEY)
+tokenizer.push_to_hub("OG-Tiro/bigbabytiro70b_merged", token=HF_WRITE_PASSKEY)
 
 # Merge to 16bit
-if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_16bit",)
-if False: model.push_to_hub_merged("OG-Tiro/Llama3dumbbabytiro", tokenizer, save_method = "merged_16bit", token = HF_WRITE_PASSKEY) #highest available quality
+if False: model.save_pretrained_merged("bigbabytiro70b", tokenizer, save_method = "merged_16bit",)
+if False: model.push_to_hub_merged("OG-Tiro/bigbabytiro70b", tokenizer, save_method = "merged_16bit", token = HF_WRITE_PASSKEY) #highest available quality
 
 # Merge to 4bit
-if True: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "merged_4bit",)
-if True: model.push_to_hub_merged("OG-Tiro/Llama3dumbbabytiro", tokenizer, save_method = "merged_4bit", token = HF_WRITE_PASSKEY)
+if False: model.save_pretrained_merged("bigbabytiro70b", tokenizer, save_method = "merged_4bit",)
+if False: model.push_to_hub_merged("OG-Tiro/bigbabytiro70b", tokenizer, save_method = "merged_4bit", token = HF_WRITE_PASSKEY)
 
 # Just LoRA adapters
-if False: model.save_pretrained_merged("Llama3dumbbabytiro", tokenizer, save_method = "lora",)
-if False: model.push_to_hub_merged("OG-Tiro/Llama3dumbbabytiro", tokenizer, save_method = "lora", token = HF_WRITE_PASSKEY)
+if False: model.save_pretrained_merged("bigbabytiro70b", tokenizer, save_method = "lora",)
+if False: model.push_to_hub_merged("OG-Tiro/bigbabytiro70b", tokenizer, save_method = "lora", token = HF_WRITE_PASSKEY)
 
 # Save to 8bit Q8_0
-if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer,)
-if False: model.push_to_hub_gguf("OG-Tiro/Llama3dumbbabytiro", tokenizer, token = HF_WRITE_PASSKEY)
+if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer,)# quantization method missing!!!
+if False: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, token = HF_WRITE_PASSKEY)
 
 # Save to 16bit GGUF
-if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer, quantization_method = "f16")
-if False: model.push_to_hub_gguf("OG-Tiro/Llama3dumbbabytiro", tokenizer, quantization_method = "f16", token = HF_WRITE_PASSKEY)
+if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer, quantization_method = "f16")
+if False: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, quantization_method = "f16", token = HF_WRITE_PASSKEY)
 
 # Save to q4_k_m GGUF
-if False: model.save_pretrained_gguf("Llama3dumbbabytiro", tokenizer, quantization_method = "q4_k_m")
-if False: model.push_to_hub_gguf("OG-Tiro/Llama3dumbbabytiro", tokenizer, quantization_method = "q4_k_m", token = HF_WRITE_PASSKEY)
+if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer, quantization_method = "q4_k_m")
+if False: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, quantization_method = "q4_k_m", token = HF_WRITE_PASSKEY)
