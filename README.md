@@ -1,3 +1,13 @@
+.
+├── Dockerfile
+├── README.md
+├── jupyter_notebooks
+│   └── Tiro_+_Llama_3_8b_Finetune_070524.ipynb
+├── requirements.txt
+├── setup.sh
+├── test.py
+└── tiro_finetune_load_model.py
+
 # tiro_finetune
 
 # move to workspace for permanent storage
