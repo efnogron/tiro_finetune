@@ -45,5 +45,8 @@ pip install -r requirements.txt
 # Log Into huggingface
 huggingface-cli login
 
+# Initialize Accelerate
+accelerate config
+
 # Monitor GPU usage
 watch -n 2 nvidia-smi

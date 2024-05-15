@@ -77,7 +77,7 @@ dataset = dataset.map(formatting_prompts_func, batched = True,)
 #model and tokenizer arguments
 max_seq_length = 4096 # automatically does RoPE Scaling internally, can choose any value
 dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-load_in_4bit = False # Use 4bit quantization to reduce memory usage. Can be False.
+load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
 load_in_8bit = False
 device_map = "DDP" # Sets up distributed data parallel using accelerate
 
@@ -96,8 +96,8 @@ fourbit_models = [
 model, tokenizer = FastLanguageModel.from_pretrained(
     #model_name = "unsloth/llama-3-8b-bnb-4bit",
     #model_name = "unsloth/llama-3-8b", # 8 Bit version
-    #model_name = "unsloth/llama-3-70b-Instruct-bnb-4bit",
-    model_name = "meta-llama/Meta-Llama-3-70B",
+    model_name = "unsloth/llama-3-70b-Instruct-bnb-4bit",
+    #model_name = "meta-llama/Meta-Llama-3-70B",
     #model_name = "unsloth/llama-3-70b",
     max_seq_length = max_seq_length,
     dtype = dtype,
