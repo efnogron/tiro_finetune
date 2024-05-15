@@ -141,7 +141,7 @@ trainer = SFTTrainer(
         per_device_train_batch_size = 2,
         gradient_accumulation_steps = 4,
         warmup_steps = 5,
-        max_steps = 200, # will override epochs if max steps is given
+        #max_steps = 200, # will override epochs if max steps is given
         learning_rate = 2e-4,
         fp16 = not torch.cuda.is_bf16_supported(),
         bf16 = torch.cuda.is_bf16_supported(),
@@ -151,6 +151,8 @@ trainer = SFTTrainer(
         lr_scheduler_type = "linear",
         seed = 3407,
         output_dir = "outputs",
+        gradient_checkpointing=True,
+        gradient_checkpointing_kwargs = {"use_reentrant": False},
     ),
 )
 

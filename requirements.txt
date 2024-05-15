@@ -11,3 +11,4 @@ datasets  # Used for loading and processing datasets from Hugging Face
 psutil  # Allows checking system resources like RAM
 jupyterlab  # Provides the Jupyter notebook interface for running and testing code interactively
 python-dotenv
+deepspeed

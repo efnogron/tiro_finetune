@@ -1,4 +1,4 @@
-#cannot run this via python, must run via accelarate: !accelerate launch tiro-finetune-70b.py
+#cannot run this via python, must run via accelarate: !accelerate launch tiro-FSDP-test.py
 
 import os
 from dotenv import load_dotenv
@@ -27,13 +27,11 @@ print("Huggingface Write Passkey:", HF_READ_PASSKEY)
 #model and tokenizer arguments
 max_seq_length = 4096 # automatically does RoPE Scaling internally, can choose any value
 dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-load_in_4bit = False # Use 4bit quantization to reduce memory usage. Can be False.
+load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
 load_in_8bit = False
-device_map = "DDP" # Sets up distributed data parallel using accelerate
+device_map = "FSDP" # Sets up fully sharded data parallel using accelerate
 
-if device_map == "DDP":
-    device_string = PartialState().process__index
-    device_map={'':device_string}
+
 
 # 4bit pre quantized models we support for 4x faster downloading + no OOMs.
 fourbit_models = [
@@ -46,8 +44,8 @@ fourbit_models = [
 model, tokenizer = FastLanguageModel.from_pretrained(
     #model_name = "unsloth/llama-3-8b-bnb-4bit",
     #model_name = "unsloth/llama-3-8b", # 8 Bit version
-    #model_name = "unsloth/llama-3-70b-Instruct-bnb-4bit",
-    model_name = "meta-llama/Meta-Llama-3-70B",
+    model_name = "unsloth/llama-3-70b-Instruct-bnb-4bit",
+    #model_name = "meta-llama/Meta-Llama-3-70B",
     #model_name = "unsloth/llama-3-70b",
     max_seq_length = max_seq_length,
     dtype = dtype,
@@ -72,7 +70,6 @@ model = FastLanguageModel.get_peft_model(
     random_state = 3407,
     use_rslora = False,  # We support rank stabilized LoRA
     loftq_config = None, # And LoftQ
-    device_map = device_map,
 )
 
 
@@ -141,7 +138,7 @@ trainer = SFTTrainer(
         per_device_train_batch_size = 2,
         gradient_accumulation_steps = 4,
         warmup_steps = 5,
-        max_steps = 200, # will override epochs if max steps is given
+        #max_steps = 200, # will override epochs if max steps is given
         learning_rate = 2e-4,
         fp16 = not torch.cuda.is_bf16_supported(),
         bf16 = torch.cuda.is_bf16_supported(),
@@ -151,6 +148,8 @@ trainer = SFTTrainer(
         lr_scheduler_type = "linear",
         seed = 3407,
         output_dir = "outputs",
+        gradient_checkpointing=True,
+        gradient_checkpointing_kwargs = {"use_reentrant": True},
     ),
 )
 
@@ -160,6 +159,15 @@ start_gpu_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 
 max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
 print(f"GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
 print(f"{start_gpu_memory} GB of memory reserved.")
+
+
+# 
+trainer.mmodel.print_trainable_parameters()
+if getattr(trainer.accelerator.state, "fsdp_plugin", None):
+    from peft.utils.other import fsdp_auto_wrap_policy
+
+    fsdp_plugin = trainer.accelerator.state.fsdp_plugin
+    fsdp_plugin.fsdp_auto_wrap_policy = fsdp_auto_wrap_policy(trainer.model)
 
 trainer_stats = trainer.train()
 
@@ -209,8 +217,8 @@ if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer,)# quantization
 if False: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, token = HF_WRITE_PASSKEY)
 
 # Save to 16bit GGUF
-if True: model.save_pretrained_gguf("bigbabytiro70b", tokenizer, quantization_method = "f16")
-if True: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, quantization_method = "f16", token = HF_WRITE_PASSKEY)
+if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer, quantization_method = "f16")
+if False: model.push_to_hub_gguf("OG-Tiro/bigbabytiro70b", tokenizer, quantization_method = "f16", token = HF_WRITE_PASSKEY)
 
 # Save to q4_k_m GGUF
 if False: model.save_pretrained_gguf("bigbabytiro70b", tokenizer, quantization_method = "q4_k_m")
