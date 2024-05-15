@@ -1,5 +1,3 @@
-# this is the tiro-tinetune-8b.py script, but it saves the model while finetuning to avoid duplicate downloads.
-
 import os
 from dotenv import load_dotenv
 from unsloth import FastLanguageModel
@@ -18,35 +16,32 @@ if HF_READ_PASSKEY is None or HF_WRITE_PASSKEY is None:
 print("Huggingface Read Passkey:", HF_READ_PASSKEY)
 print("Huggingface Write Passkey:", HF_READ_PASSKEY)
 
-max_seq_length = 4096  # automatically does RoPE Scaling internally, can choose any value
-dtype = None  # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-load_in_4bit = False  # Use 4bit quantization to reduce memory usage. Can be False.
+
+
+max_seq_length = 4096 # automatically does RoPE Scaling internally, can choose any value
+dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
+load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
 load_in_8bit = False
 
-model_name = "meta-llama/Meta-Llama-3-70B"
-local_model_path = "local_model"
+# 4bit pre quantized models we support for 4x faster downloading + no OOMs.
+fourbit_models = [
+    "unsloth/mistral-7b-bnb-4bit", # useless
+    "unsloth/llama-3-70b-bnb-4bit",
+    "unsloth/llama-3-8b-bnb-4bit", #
+] # More models at https://huggingface.co/unsloth
 
-# Check if the model is already downloaded
-if os.path.exists(local_model_path):
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        local_model_path,
-        max_seq_length=max_seq_length,
-        dtype=dtype,
-        load_in_4bit=load_in_4bit,
-        load_in_8bit=load_in_8bit
-    )
-    print("Model loaded from local path.")
-else:
-    model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name=model_name,
-        max_seq_length=max_seq_length,
-        dtype=dtype,
-        load_in_4bit=load_in_4bit,
-        load_in_8bit=load_in_8bit
-    )
-    model.save_pretrained(local_model_path)  # Save the model locally
-    tokenizer.save_pretrained(local_model_path)
-    print("Model downloaded and saved locally.")
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/llama-3-8b-bnb-4bit",
+    #model_name = "unsloth/llama-3-8b", # 8 Bit version
+    #model_name = "unsloth/llama-3-70b-bnb-4bit",
+    #model_name = "unsloth/llama-3-70b",
+    max_seq_length = max_seq_length,
+    dtype = dtype,
+    #load_in_4bit = load_in_4bit, # i guess this must be changed to load in 8 bit?
+    #load_in_8bit = load_in_8bit
+    # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
+)
 
 print("Model and tokenizer successfully loaded.")
 print("Model architecture:", model)

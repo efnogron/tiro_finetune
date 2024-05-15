@@ -25,8 +25,6 @@ ssh-keygen -t rsa -b 4096 -C "42118609+efnogron@users.noreply.github.com"
 # Add SSH Key to SSH agent
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_rsa
-
-# Display SSH Key
 cat ~/.ssh/id_rsa.pub
 copy results into git SSH section
 
