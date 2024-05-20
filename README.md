@@ -17,7 +17,7 @@ cd /workspace/
 
 ## How to setup SSH to Runpod
 git config --global user.name "efnogron"
-git config --global user.email "42118609+efnogron@users.noreply.github.com"
+git config --global user.email ""
 
 # Generate SSH Key
 ssh-keygen -t rsa -b 4096 -C "42118609+efnogron@users.noreply.github.com"
